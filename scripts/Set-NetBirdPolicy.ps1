@@ -63,7 +63,10 @@
     Client does not connect automatically at service start (REG_DWORD).
 
 .PARAMETER DisableAutostart
-    Suppress the GUI launch-on-login default (REG_DWORD). UI-only.
+    Suppress the GUI's own launch-on-login default (REG_DWORD). UI-only,
+    and it does not remove the MSI installer's machine-wide Run entry;
+    to stop the tray UI launching at login entirely, install with
+    Deploy-NetBird.ps1 -NoAutostart (msiexec AUTOSTART=0).
 
 .PARAMETER RosenpassEnabled
     Enable Rosenpass post-quantum key exchange (REG_DWORD).

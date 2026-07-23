@@ -56,7 +56,10 @@ Windows Registry Editor Version 5.00
 ; Hide the advanced-view section in the client UI, REG_DWORD. UI-only.
 ;"DisableAdvancedView"=dword:00000001
 
-; Suppress the GUI launch-on-login default, REG_DWORD. UI-only.
+; Suppress the GUI's own launch-on-login default, REG_DWORD. UI-only.
+; Does NOT remove the MSI's machine-wide Run entry; to keep the tray UI
+; from launching at login entirely, install with AUTOSTART=0
+; (Deploy-NetBird.ps1 -NoAutostart).
 ;"DisableAutostart"=dword:00000001
 
 ; Allow the embedded SSH server on this peer, REG_DWORD (0 = deny).

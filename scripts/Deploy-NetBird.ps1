@@ -62,6 +62,13 @@
 .PARAMETER DisableUpdateSettings
     Write DisableUpdateSettings=1: GUI settings are read-only for the user.
 
+.PARAMETER NoAutostart
+    Install with AUTOSTART=0: the MSI then skips its machine-wide Run
+    entry (HKLM\...\CurrentVersion\Run), so the tray UI does not launch
+    at user login. Note this is the installer's autostart, separate from
+    the DisableAutostart MDM policy, which only governs the GUI's own
+    launch-on-login setting and does not remove the installer's Run key.
+
 .NOTES
     Run as SYSTEM or Administrator. PowerShell 5.1 compatible.
     Reference: https://docs.netbird.io/client/mdm-integration
@@ -88,6 +95,7 @@ param(
     [switch]$DisableAutoConnect,
     [switch]$DisableProfiles,
     [switch]$DisableUpdateSettings,
+    [switch]$NoAutostart,
     [string]$DownloadPath  = "$env:TEMP\netbird-installer.msi",
     [string]$MsiLogPath    = "$env:ProgramData\NetBird\netbird-install.log",
     [string]$ScriptLogPath = "$env:ProgramData\NetBird\netbird-deploy.log"
@@ -238,6 +246,10 @@ $msiArgs = @(
     '/norestart',
     '/l*v', "`"$MsiLogPath`""
 )
+if ($NoAutostart) {
+    $msiArgs += 'AUTOSTART=0'
+    Write-Log "AUTOSTART=0: installer will not register the tray UI for launch at user login."
+}
 $proc = Start-Process -FilePath 'msiexec.exe' `
                       -ArgumentList $msiArgs `
                       -Wait `
