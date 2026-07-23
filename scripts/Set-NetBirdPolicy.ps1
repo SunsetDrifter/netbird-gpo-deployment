@@ -26,9 +26,11 @@
     https://api.example.com:443 (REG_SZ).
 
 .PARAMETER PreSharedKey
-    WireGuard pre-shared key (REG_SZ). Secret: never echoed or logged.
-    Anyone with local admin rights can read this registry value, so prefer
-    distribution channels scoped to the machines that need it.
+    WireGuard pre-shared key (REG_SZ): an extra symmetric encryption layer
+    on the tunnels. Not an enrollment/setup key; registration still
+    happens via SSO or netbird up --setup-key. Secret: never echoed or
+    logged. Anyone with local admin rights can read this registry value,
+    so prefer distribution channels scoped to the machines that need it.
 
 .PARAMETER DisableUpdateSettings
     GUI settings are read-only for the user (REG_DWORD).

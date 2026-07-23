@@ -43,9 +43,9 @@ Policy and install are split on purpose: policy is pure GPO state (no
 script needed for URL or lockdown), so Intune or any other MDM shop can
 take `policy/` alone and ignore the script.
 
-## Quick start
+## Quick start (single test machine)
 
-On a test machine, elevated:
+Elevated PowerShell:
 
 ```powershell
 # 1. Write a hardened policy posture (edit the URL first; omit for NetBird Cloud)
@@ -58,9 +58,28 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Deploy-NetBird.ps1
 reg query HKLM\Software\Policies\NetBird
 ```
 
-Then follow [docs/gpo-setup.md](docs/gpo-setup.md) to do the same via GPO
-at fleet scale, and [docs/verification.md](docs/verification.md) to check
-the result.
+## Fleet deployment (GPO)
+
+1. **ADMX**: fetch `netbird.admx`/`.adml` from upstream and copy to the
+   Central Store ([admx/README.md](admx/README.md)).
+2. **Policy GPO**: Computer Configuration > Policies > Administrative
+   Templates > NetBird. Set Management URL with its explicit port
+   (`https://api.example.com:443`; skip for NetBird Cloud) and the
+   lockdown policies you want. Get the URL right before enabling
+   Disable Update Settings; after that, policy is the only channel that
+   can change it.
+3. **Install GPO**: add `scripts/Deploy-NetBird.ps1` from SYSVOL as a
+   computer startup script. No parameters needed; pass
+   `-MsiSource \\fileserver\software\netbird.msi` for clients without
+   internet access.
+4. **Scope**: link both GPOs to the workstation OU.
+5. **Done**: machines install on next boot; users click Connect and sign
+   in via SSO on first login. Policy edits reach running clients within
+   about a minute (the daemon re-reads the key every 60 s). Verify with
+   [docs/verification.md](docs/verification.md).
+
+Full walkthrough with scoping and first-login details:
+[docs/gpo-setup.md](docs/gpo-setup.md).
 
 ## Security notes
 

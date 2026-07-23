@@ -17,8 +17,10 @@ Windows Registry Editor Version 5.00
 ; Management URL, REG_SZ. Include the explicit port. Omit for NetBird Cloud.
 ;"ManagementURL"="https://api.example.com:443"
 
-; WireGuard pre-shared key, REG_SZ. SECRET: the client redacts it in logs.
-; Anyone with local admin rights can read it here.
+; WireGuard pre-shared key, REG_SZ: an extra symmetric encryption layer
+; on the WireGuard tunnels. NOT an enrollment/setup key; registration
+; still happens via SSO or netbird up --setup-key. SECRET: the client
+; redacts it in logs, but anyone with local admin rights can read it here.
 ;"PreSharedKey"="<base64 wireguard psk>"
 
 ; Local WireGuard listen port, REG_DWORD (example below is 51820 = 0xca6c).
