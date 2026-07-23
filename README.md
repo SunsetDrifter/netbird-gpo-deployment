@@ -57,6 +57,32 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\Deploy-NetBird.ps1
 reg query HKLM\Software\Policies\NetBird
 ```
 
+## Using the scripts
+
+The .ps1 files are command-line tools: you never edit them, you pass
+your choices as arguments when you run them (elevated PowerShell). The
+`param(...)` block at the top of each script is the list of arguments
+it accepts, not a settings section.
+
+Boolean policies are switches, and each one has three states:
+
+```powershell
+.\scripts\Set-NetBirdPolicy.ps1 -BlockInbound              # enforced ON  (writes 1)
+.\scripts\Set-NetBirdPolicy.ps1 -BlockInbound:$false       # enforced OFF (writes 0; note the colon)
+.\scripts\Set-NetBirdPolicy.ps1 -RemoveValue BlockInbound  # unmanaged    (deletes the value)
+```
+
+Enforced OFF and unmanaged are different: 0 still means "the admin
+decided, and the answer is no" (the setting shows as managed in the
+client), while an absent value leaves the user or CLI in control.
+Anything you do not name on the command line is left untouched. Add
+`-WhatIf` to preview a change without writing it; every real run prints
+the resulting key state.
+
+If you prefer values written down in a file instead, use the profiles
+in `policy\profiles\` with `reg import`; the scripts and the .reg files
+write the identical registry values.
+
 ## Fleet deployment (GPO)
 
 1. **ADMX**: fetch `netbird.admx`/`.adml` from upstream and copy to the
