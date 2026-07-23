@@ -75,6 +75,12 @@ shops).
    The script verifies the Authenticode signature either way before
    executing the MSI.
 
+Expect the script's first run one reboot later than the policy values:
+startup scripts only execute after the client has already downloaded the
+scripts policy, so a freshly joined or freshly scoped machine typically
+needs one boot (or `gpupdate /force`) to receive the GPO and the next
+boot to run it. Standard Group Policy behavior, not a script property.
+
 If PowerShell execution policy is restricted in your environment, set
 **Computer Configuration > Policies > Administrative Templates > Windows
 Components > Windows PowerShell > Turn on Script Execution** to
