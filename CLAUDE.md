@@ -73,11 +73,3 @@ adjacent prose. No source, no claim.
 - Removing a `ManagementURL` policy value does not revert the daemon's
   URL: the overlaid value persists in local client config
   (lab-verified on v0.74.7).
-
-## History
-
-This repo replaces SunsetDrifter/netbird-windows-lockdown-mode (two-boot
-flag workaround with marker files) and absorbs Install-NetBird.ps1 from
-SunsetDrifter/netbird-everyday-scripts. The old logon script, marker
-files, and second-boot lockdown pass are obsolete by design; do not
-reintroduce them. See CHANGES.md.

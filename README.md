@@ -37,7 +37,6 @@ v0.73.0 release. Earlier clients ignore the policy key entirely.
 | `admx/README.md` | Fetching upstream `netbird.admx`/`.adml` and importing to the Central Store |
 | `docs/gpo-setup.md` | GPMC walkthrough: ADMX import, policy GPO, startup script, scoping, first login |
 | `docs/verification.md` | Registry, `netbird status -d`, log, and behavior checks |
-| `docs/migration-from-lockdown-mode.md` | Coming from the old flag-based two-boot approach |
 
 Policy and install are split on purpose: policy is pure GPO state (no
 script needed for URL or lockdown), so Intune or any other MDM shop can
