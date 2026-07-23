@@ -79,14 +79,6 @@ the result.
   verifies the MSI Authenticode signature before executing it, whether
   downloaded or pre-staged on a share.
 
-## Replaces
-
-- [netbird-windows-lockdown-mode](https://github.com/SunsetDrifter/netbird-windows-lockdown-mode)
-  (two-boot flag workaround; see
-  [docs/migration-from-lockdown-mode.md](docs/migration-from-lockdown-mode.md))
-- [netbird-everyday-scripts](https://github.com/SunsetDrifter/netbird-everyday-scripts)
-  `Install-NetBird.ps1` (merged into `Deploy-NetBird.ps1`)
-
 ## License
 
 MIT, see [LICENSE](LICENSE).
