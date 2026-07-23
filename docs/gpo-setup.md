@@ -74,6 +74,13 @@ shops).
    `-MsiSource \\fileserver.domain.example.com\software\netbird.msi`.
    The script verifies the Authenticode signature either way before
    executing the MSI.
+5. Fleet upgrades are opt-in: by default the script never touches an
+   existing install. Add `-MinimumVersion 0.75.0` to the parameters when
+   you decide the fleet should move; machines below the floor upgrade in
+   place at next boot (peer identity survives), machines at or above it
+   are untouched. The script refuses to run if the MSI at `-MsiSource`
+   is not newer than what is installed, so a stale share produces a
+   logged error instead of an install loop.
 
 Expect the script's first run one reboot later than the policy values:
 startup scripts only execute after the client has already downloaded the

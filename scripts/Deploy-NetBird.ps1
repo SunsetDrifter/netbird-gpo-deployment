@@ -62,6 +62,16 @@
 .PARAMETER DisableUpdateSettings
     Write DisableUpdateSettings=1: GUI settings are read-only for the user.
 
+.PARAMETER MinimumVersion
+    Version floor, e.g. 0.75.0. Without it, the script is install-once:
+    any existing NetBird install is left at its version. With it, an
+    installed version below the floor triggers an in-place MSI upgrade
+    (user data and peer identity survive; the service restarts). Raise
+    the floor in the GPO script parameters when you decide the fleet
+    should move. The script refuses to run msiexec if the MSI at
+    MsiSource is not actually newer than the installed version, so a
+    stale share cannot cause an install loop.
+
 .PARAMETER NoAutostart
     Install with AUTOSTART=0: the MSI then skips its machine-wide Run
     entry (HKLM\...\CurrentVersion\Run), so the tray UI does not launch
@@ -95,6 +105,7 @@ param(
     [switch]$DisableAutoConnect,
     [switch]$DisableProfiles,
     [switch]$DisableUpdateSettings,
+    [version]$MinimumVersion,
     [switch]$NoAutostart,
     [string]$DownloadPath  = "$env:TEMP\netbird-installer.msi",
     [string]$MsiLogPath    = "$env:ProgramData\NetBird\netbird-install.log",
@@ -181,7 +192,8 @@ else {
 
 # ---------------------------------------------------------------------------
 # 2. Skip install if NetBird is already installed (idempotent for re-runs;
-#    the policy above has still been refreshed)
+#    the policy above has still been refreshed). With -MinimumVersion, an
+#    installed version below the floor falls through to an in-place upgrade.
 # ---------------------------------------------------------------------------
 $uninstallKeys = @(
     'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*',
@@ -190,9 +202,21 @@ $uninstallKeys = @(
 $existing = Get-ItemProperty $uninstallKeys -ErrorAction SilentlyContinue |
             Where-Object { $_.DisplayName -like 'NetBird*' }
 
+$installedVersion = $null
 if ($existing) {
-    Write-Log "NetBird already installed (version $($existing.DisplayVersion)). Policy refreshed; skipping install."
-    exit 0
+    if (-not $MinimumVersion) {
+        Write-Log "NetBird already installed (version $($existing.DisplayVersion)). Policy refreshed; skipping install."
+        exit 0
+    }
+    if (-not [version]::TryParse($existing.DisplayVersion, [ref]$installedVersion)) {
+        Write-Log "Installed version '$($existing.DisplayVersion)' is not parseable; leaving it untouched." 'WARN'
+        exit 0
+    }
+    if ($installedVersion -ge $MinimumVersion) {
+        Write-Log "NetBird $installedVersion meets the $MinimumVersion floor. Policy refreshed; skipping install."
+        exit 0
+    }
+    Write-Log "NetBird $installedVersion is below the $MinimumVersion floor; upgrading in place."
 }
 
 # ---------------------------------------------------------------------------
@@ -216,8 +240,19 @@ else {
         Write-Log "MSI not found at $MsiSource" 'ERROR'
         exit 1
     }
-    Write-Log "Using MSI from $MsiSource"
-    $msiPath = $MsiSource
+    if ($MsiSource -like '\\*') {
+        # Copy UNC sources local: msiexec is more reliable against a local
+        # file, and the WindowsInstaller COM API (upgrade guard) cannot
+        # open a database over UNC.
+        Write-Log "Copying MSI from $MsiSource to $DownloadPath"
+        Copy-Item -Path $MsiSource -Destination $DownloadPath -Force
+        $msiPath = $DownloadPath
+        $downloaded = $true
+    }
+    else {
+        Write-Log "Using MSI from $MsiSource"
+        $msiPath = $MsiSource
+    }
 }
 
 if (-not (Test-Path $msiPath) -or (Get-Item $msiPath).Length -lt 1MB) {
@@ -237,7 +272,40 @@ if ($sig.Status -ne 'Valid') {
 Write-Log "Signature verified. Signer: $($sig.SignerCertificate.Subject)"
 
 # ---------------------------------------------------------------------------
-# 5. Silent install via msiexec
+# 5. Upgrade guard: never run msiexec against an MSI that is not newer than
+#    the installed version (a stale MsiSource would otherwise re-trigger
+#    every boot once -MinimumVersion is raised past it)
+# ---------------------------------------------------------------------------
+if ($installedVersion) {
+    # Read ProductVersion in a child process: the WindowsInstaller COM
+    # object keeps the MSI open for the lifetime of its process, which
+    # would block Remove-Item and msiexec in this one.
+    $readVersion = {
+        $i = New-Object -ComObject WindowsInstaller.Installer
+        $d = $i.GetType().InvokeMember('OpenDatabase', 'InvokeMethod', $null, $i, @($args[0], 0))
+        $v = $d.GetType().InvokeMember('OpenView', 'InvokeMethod', $null, $d,
+                                       @("SELECT Value FROM Property WHERE Property = 'ProductVersion'"))
+        $v.GetType().InvokeMember('Execute', 'InvokeMethod', $null, $v, $null)
+        $r = $v.GetType().InvokeMember('Fetch', 'InvokeMethod', $null, $v, $null)
+        $r.GetType().InvokeMember('StringData', 'GetProperty', $null, $r, @(1))
+    }
+    $msiVersion = $null
+    $raw = & powershell.exe -NoProfile -NonInteractive -Command $readVersion -args (Resolve-Path $msiPath).Path 2>$null
+    if (-not [version]::TryParse(($raw | Select-Object -Last 1), [ref]$msiVersion)) {
+        Write-Log "Could not read ProductVersion from the MSI (got: '$raw')." 'ERROR'
+        if ($downloaded) { Remove-Item $msiPath -Force -ErrorAction SilentlyContinue }
+        exit 1
+    }
+    if ($msiVersion -le $installedVersion) {
+        Write-Log "MSI at $MsiSource is $msiVersion, not newer than installed $installedVersion; cannot satisfy the $MinimumVersion floor. Update the MSI source." 'ERROR'
+        if ($downloaded) { Remove-Item $msiPath -Force -ErrorAction SilentlyContinue }
+        exit 1
+    }
+    Write-Log "Upgrading from $installedVersion to $msiVersion."
+}
+
+# ---------------------------------------------------------------------------
+# 6. Silent install via msiexec
 # ---------------------------------------------------------------------------
 Write-Log "Launching msiexec in silent mode."
 $msiArgs = @(
@@ -262,7 +330,7 @@ if ($proc.ExitCode -ne 0) {
 }
 
 # ---------------------------------------------------------------------------
-# 6. Cleanup
+# 7. Cleanup
 # ---------------------------------------------------------------------------
 if ($downloaded) {
     Remove-Item $msiPath -Force -ErrorAction SilentlyContinue

@@ -70,7 +70,10 @@ reg query HKLM\Software\Policies\NetBird
 3. **Install GPO**: add `scripts/Deploy-NetBird.ps1` from SYSVOL as a
    computer startup script. No parameters needed; pass
    `-MsiSource \\fileserver\software\netbird.msi` for clients without
-   internet access.
+   internet access, `-NoAutostart` to keep the tray UI from launching at
+   user login, and `-MinimumVersion 0.75.0` when you want machines below
+   a version floor upgraded in place (default is install-once, never
+   upgrade).
 4. **Scope**: link both GPOs to the workstation OU.
 5. **Done**: machines install on next boot; users click Connect and sign
    in via SSO on first login. Policy edits reach running clients within
