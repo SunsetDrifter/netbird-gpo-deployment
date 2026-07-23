@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+; NetBird managed policy: server peer.
+; Pins the management server only. Pair with setup-key registration
+; (netbird up --setup-key ...) for unattended enrollment; servers usually
+; keep routing and inbound capabilities, so nothing else is enforced here.
+;
+; ManagementURL includes the explicit port. Replace with your self-hosted
+; URL, or delete the line entirely for NetBird Cloud.
+
+[HKEY_LOCAL_MACHINE\Software\Policies\NetBird]
+"ManagementURL"="https://api.example.com:443"

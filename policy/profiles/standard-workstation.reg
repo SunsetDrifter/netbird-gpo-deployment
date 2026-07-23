@@ -1,0 +1,12 @@
+Windows Registry Editor Version 5.00
+
+; NetBird managed policy: standard workstation.
+; Pins the management server and prevents account switching; everything
+; else stays user-configurable.
+;
+; ManagementURL includes the explicit port. Replace with your self-hosted
+; URL, or delete the line entirely for NetBird Cloud.
+
+[HKEY_LOCAL_MACHINE\Software\Policies\NetBird]
+"ManagementURL"="https://api.example.com:443"
+"DisableProfiles"=dword:00000001

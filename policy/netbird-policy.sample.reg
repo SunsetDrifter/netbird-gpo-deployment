@@ -1,0 +1,80 @@
+Windows Registry Editor Version 5.00
+
+; NetBird managed policy: annotated sample of ALL supported keys.
+; Every value is commented out. Uncomment only what you intend to enforce:
+; a value that is absent is unmanaged and stays under user/CLI control.
+;
+; The NetBird daemon (v0.73.0+) reads this key at config load as the
+; highest-priority override layer. Writing values triggers no connection.
+; Canonical key list: client/mdm/policy.go in netbirdio/netbird.
+; Value names are matched case-insensitively; casing below matches the
+; upstream ADMX.
+
+[HKEY_LOCAL_MACHINE\Software\Policies\NetBird]
+
+; --- Connection ------------------------------------------------------------
+
+; Management URL, REG_SZ. Include the explicit port. Omit for NetBird Cloud.
+;"ManagementURL"="https://api.example.com:443"
+
+; WireGuard pre-shared key, REG_SZ. SECRET: the client redacts it in logs.
+; Anyone with local admin rights can read it here.
+;"PreSharedKey"="<base64 wireguard psk>"
+
+; Local WireGuard listen port, REG_DWORD (example below is 51820 = 0xca6c).
+;"WireguardPort"=dword:0000ca6c
+
+; Do not connect automatically at service start, REG_DWORD.
+;"DisableAutoConnect"=dword:00000001
+
+; Force lazy connections on (1) or off (0), overriding the management
+; feature flag, REG_DWORD. Registry-only key; not in the upstream ADMX.
+;"LazyConnection"=dword:00000001
+
+; --- Lockdown / hardening ---------------------------------------------------
+
+; Refuse all inbound connections to this peer, REG_DWORD.
+;"BlockInbound"=dword:00000001
+
+; This peer cannot act as a routing peer, REG_DWORD.
+;"DisableServerRoutes"=dword:00000001
+
+; This peer does not install routes to network resources, REG_DWORD.
+;"DisableClientRoutes"=dword:00000001
+
+; GUI settings become read-only for the user, REG_DWORD.
+;"DisableUpdateSettings"=dword:00000001
+
+; User cannot switch NetBird profiles (accounts), REG_DWORD.
+;"DisableProfiles"=dword:00000001
+
+; Hide/disable the Networks view in the client UI, REG_DWORD.
+;"DisableNetworks"=dword:00000001
+
+; Hide the advanced-view section in the client UI, REG_DWORD. UI-only.
+;"DisableAdvancedView"=dword:00000001
+
+; Suppress the GUI launch-on-login default, REG_DWORD. UI-only.
+;"DisableAutostart"=dword:00000001
+
+; Allow the embedded SSH server on this peer, REG_DWORD (0 = deny).
+;"AllowServerSSH"=dword:00000000
+
+; Reserved by upstream; no metrics pipeline consumes it yet, REG_DWORD.
+;"DisableMetricsCollection"=dword:00000001
+
+; --- Rosenpass ---------------------------------------------------------------
+
+; Enable Rosenpass post-quantum key exchange, REG_DWORD.
+;"RosenpassEnabled"=dword:00000000
+
+; Allow connections to peers without Rosenpass, REG_DWORD.
+;"RosenpassPermissive"=dword:00000000
+
+; --- Split tunnel (parsed but IGNORED on Windows as of v0.75) ----------------
+
+; "allow" or "disallow", REG_SZ.
+;"SplitTunnelMode"="allow"
+
+; Comma-separated app list, REG_SZ.
+;"SplitTunnelApps"="my.fancy.app,or.something.else"
